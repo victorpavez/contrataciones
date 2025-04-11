@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    }
+    h2 {
+      font-weight: 700;
+      color: #343a40;
+      border-bottom: 2px solid #0d6efd;
+      padding-bottom: 0.5rem;
+    }
+    .table th {
+      background-color: #0d6efd;
+      color: white;
+      text-transform: uppercase;
+    }
+    .table td, .table th {
+      vertical-align: middle;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.08);
+    }
+  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datos Recibidos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container py-5">
+    <h2 class="mb-4">Datos Recibidos del Formulario</h2>
+    <div id="datos-container" class="table-responsive"></div>
+    <div class="text-end mt-4 d-flex justify-content-between">
+      <a href="index.html" class="btn btn-outline-primary">⬅️ Volver al inicio</a>
+      <button id="confirmarEnvio" class="btn btn-success px-4">✅ Confirmar y Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const datos = JSON.parse(localStorage.getItem('datosFormularioObras')) || {};
+
+      const contenedor = document.getElementById('datos-container');
+
+      if (Object.keys(datos).length === 0) {
+        contenedor.innerHTML = '<div class="alert alert-warning">No se encontraron datos cargados.</div>';
+      } else {
+        let html = '<table class="table table-bordered">';
+        html += '<thead><tr><th>Campo</th><th>Valor</th></tr></thead><tbody>';
+        for (const clave in datos) {
+          html += `<tr><td>${clave}</td><td>${datos[clave]}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        contenedor.innerHTML = html;
+      }
+
+      const boton = document.getElementById('confirmarEnvio');
+      if (boton) {
+        boton.addEventListener('click', async () => {
+          try {
+            const formData = new FormData();
+            formData.append('fecha_recepcion', new Date().toISOString().split('T')[0]);
+            formData.append('id_expediente', 'EXP-' + Math.floor(Math.random() * 100000));
+            formData.append('nombre', datos.nombre);
+            formData.append('secretaria', datos.secretaria);
+            formData.append('area', datos.area);
+            formData.append('rubro', datos.rubro);
+            formData.append('tipo', datos.tipo);
+            formData.append('categoria', datos.categoria);
+            formData.append('cantidad', datos.cantidad || '');
+            formData.append('diagrama', datos.diagrama || '');
+            formData.append('detalle_reparacion', datos['detalle-reparacion'] || '');
+            formData.append('fecha_pedido', datos.fecha);
+            const partesPeriodo = datos.periodo?.split(' a ') || [];
+            formData.append('periodo_inicial', partesPeriodo[0] || '');
+            formData.append('periodo_final', partesPeriodo[1] || '');
+            formData.append('presupuesto', datos.presupuesto);
+            formData.append('compra_contratacion', datos['compra-contratacion'] || '');
+            formData.append('lunes', datos.cronograma_lunes || '');
+            formData.append('martes', datos.cronograma_martes || '');
+            formData.append('miercoles', datos.cronograma_miercoles || '');
+            formData.append('jueves', datos.cronograma_jueves || '');
+            formData.append('viernes', datos.cronograma_viernes || '');
+            formData.append('sabado', datos.cronograma_sabado || '');
+            formData.append('domingo', datos.cronograma_domingo || '');
+
+            const respuesta = await fetch('https://script.google.com/macros/s/AKfycbzR3UvX1fq0iA5wfd4gX6wvonf3I_M1Ruerc9iWMgWAaLw1PXqqk-JkZInDxnUe5eCP/exec', {
+              method: 'POST',
+              body: formData
+            });
+
+            const text = await respuesta.text();
+            console.log('Respuesta del servidor:', text);
+            alert('✅ Los datos fueron confirmados y enviados correctamente. Por favor, revise su mail oficial para imprimir la nota.');
+          } catch (error) {
+            console.error('Error al enviar los datos:', error);
+            alert('❌ No se pudo conectar con el servidor.');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
